@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Willow & Whispers</title>
+    <style>
+        /* 基础样式与宣纸背景 */
+        :root {
+            --paper: #f1ede3;
+            --ink: #2c3e50;
+            --willow-green: #5a7261;
+            --seal-red: #b22c2a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--paper);
+            font-family: "Optima", "Hoefler Text", "Georgia", serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--ink);
+        }
+
+        /* 宣纸纹理叠层 */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://www.transparenttextures.com/patterns/handmade-paper.png');
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* 远山背景 (写意) */
+        .background-mountains {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 30vh;
+            background: linear-gradient(to top, rgba(0,0,0,0.05), transparent);
+            clip-path: polygon(0% 100%, 15% 70%, 35% 85%, 60% 60%, 80% 80%, 100% 70%, 100% 100%);
+            z-index: 1;
+        }
+
+        /* 柳树容器 */
+        .willow-scene {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        /* 柳枝动画 */
+        .willow-branch {
+            position: absolute;
+            top: -10px;
+            right: 10%;
+            width: 200px;
+            height: auto;
+            transform-origin: top center;
+            animation: sway 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes sway {
+            0% { transform: rotate(-2deg); }
+            100% { transform: rotate(3deg); }
+        }
+
+        /* 小鸟动画 */
+        .bird {
+            position: absolute;
+            fill: var(--ink);
+            opacity: 0.7;
+            z-index: 5;
+        }
+
+        .flying-bird {
+            width: 20px;
+            animation: flyPath 20s linear infinite;
+        }
+
+        @keyframes flyPath {
+            0% { transform: translate(-10vw, 40vh) scale(1); }
+            50% { transform: translate(110vw, 20vh) scale(0.8); }
+            100% { transform: translate(-10vw, 10vh) scale(1); }
+        }
+
+        /* 提示语 */
+        .hint {
+            position: absolute;
+            bottom: 10%;
+            letter-spacing: 4px;
+            font-size: 0.8rem;
+            opacity: 0.4;
+            text-transform: uppercase;
+            animation: fadeInOut 3s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 签语弹出层 */
+        #fortune-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(241, 237, 227, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 1s ease;
+        }
+
+        #fortune-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .fortune-card {
+            text-align: center;
+            padding: 40px;
+            max-width: 80%;
+            border-left: 1px solid rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .fortune-text {
+            font-size: 1.4rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        /* 红色印章 */
+        .seal {
+            width: 45px;
+            height: 45px;
+            border: 2px solid var(--seal-red);
+            color: var(--seal-red);
+            font-weight: bold;
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            padding: 4px;
+            transform: rotate(-5deg);
+        }
+
+        /* 墨水晕染效果 */
+        .ink-dot {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(44, 62, 80, 0.15);
+            transform: scale(0);
+            animation: inkSpread 1.2s ease-out forwards;
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        @keyframes inkSpread {
+            to { transform: scale(5); opacity: 0; }
+        }
+    </style>
+</head>
+<body onclick="showFortune(event)">
+
+    <div class="background-mountains"></div>
+
+    <div class="willow-scene">
+        <!-- 柳枝与鸟笼 SVG -->
+        <svg class="willow-branch" viewBox="0 0 200 400">
+            <!-- 柳干 -->
+            <path d="M180,0 Q160,100 170,300" fill="none" stroke="var(--ink)" stroke-width="1.5" opacity="0.4"/>
+            <!-- 垂柳丝 -->
+            <path d="M175,50 C140,150 150,250 145,350" fill="none" stroke="var(--willow-green)" stroke-width="0.8" opacity="0.6"/>
+            <path d="M170,80 C120,180 130,280 125,380" fill="none" stroke="var(--willow-green)" stroke-width="0.8" opacity="0.4"/>
+            <!-- 鸟笼 -->
+            <g transform="translate(138, 345) scale(0.6)">
+                <rect x="0" y="0" width="20" height="25" fill="none" stroke="var(--ink)" stroke-width="1" rx="2"/>
+                <line x1="5" y1="0" x2="5" y2="25" stroke="var(--ink)" stroke-width="0.5"/>
+                <line x1="10" y1="0" x2="10" y2="25" stroke="var(--ink)" stroke-width="0.5"/>
+                <line x1="15" y1="0" x2="15" y2="25" stroke="var(--ink)" stroke-width="0.5"/>
+                <circle cx="10" cy="12" r="2" fill="var(--ink)" opacity="0.5"/> <!-- 笼中鸟 -->
+            </g>
+        </svg>
+
+        <!-- 飞翔的小鸟 -->
+        <svg class="bird flying-bird" viewBox="0 0 24 24">
+            <path d="M21,12C21,12 19,13 16,13C13,13 11,11 11,11C11,11 9,13 6,13C3,13 1,12 1,12C1,12 3,11 6,11C9,11 11,13 11,13C11,13 13,11 16,11C19,11 21,12 21,12Z" />
+        </svg>
+    </div>
+
+    <div class="hint">Tap to catch a whisper</div>
+
+    <!-- 签语层 -->
+    <div id="fortune-overlay" onclick="closeFortune(event)">
+        <div class="fortune-card">
+            <div class="fortune-text" id="fortune-content">
+                The wind knows which way the willow bends.
+            </div>
+            <div class="seal">ZEN<br>LIFE</div>
+            <p style="margin-top: 30px; font-size: 0.6rem; letter-spacing: 2px; color: #999;">TOUCH TO RETURN</p>
+        </div>
+    </div>
+
+    <script>
+        const fortunes = [
+            "A single bird’s song can awaken the quietest valley.",
+            "The willow bends but does not break in the storm.",
+            "Do not seek the footprints of the ancients, seek what they sought.",
+            "Flow like water, which seeks the lowest places that others avoid.",
+            "Spring comes, and the grass grows by itself.",
+            "Your heart is a garden; quiet thoughts are its blossoms.",
+            "Wait for the mud to settle and the water to clear.",
+            "Even the longest journey begins beneath your feet.",
+            "Nature does not hurry, yet everything is accomplished."
+        ];
+
+        function showFortune(e) {
+            // 墨水扩散效果
+            const ink = document.createElement("div");
+            ink.classList.add("ink-dot");
+            ink.style.left = e.clientX - 25 + "px";
+            ink.style.top = e.clientY - 25 + "px";
+            document.body.appendChild(ink);
+            setTimeout(() => ink.remove(), 1200);
+
+            // 随机签语
+            const content = fortunes[Math.floor(Math.random() * fortunes.length)];
+            document.getElementById('fortune-content').innerText = content;
+
+            // 延迟显示弹出层
+            setTimeout(() => {
+                document.getElementById('fortune-overlay').classList.add('active');
+            }, 400);
+        }
+
+        function closeFortune(e) {
+            e.stopPropagation();
+            document.getElementById('fortune-overlay').classList.remove('active');
+        }
+
+        // 禁止移动端缩放
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
